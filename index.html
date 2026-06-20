@@ -108,12 +108,18 @@ nav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--card);bo
 .sbox input{width:100%;padding:10px 14px 10px 38px;border-radius:13px;border:1px solid var(--border);background:var(--card);font-family:'Cairo',sans-serif;font-size:.86rem;color:var(--text);outline:none}
 .sbox input:focus{border-color:var(--gold)}
 .sbox-ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:.95rem}
-.s-list{display:flex;flex-direction:column;gap:7px}
-.s-row{background:var(--card);border-radius:13px;padding:11px 13px;border:1px solid var(--border);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:11px}
-.s-row:hover{border-color:var(--gold);background:var(--card2)}
-.s-num{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--g3s),var(--g5));display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:900;color:var(--gold2);flex-shrink:0}
-.s-name{font-family:'Amiri',serif;font-size:1.05rem;color:var(--text)}
-.s-meta{font-size:.65rem;color:var(--muted);margin-top:1px}
+.s-list{display:flex;flex-direction:column;gap:8px}
+.s-row{background:var(--card);border-radius:14px;padding:12px 14px;border:1px solid var(--border);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:13px;position:relative;overflow:hidden}
+.s-row::before{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent 60%,#caa02806 100%);opacity:0;transition:opacity .2s}
+.s-row:hover{border-color:var(--gold);background:var(--card2);transform:translateX(-2px)}
+.s-row:hover::before{opacity:1}
+.s-num{width:42px;height:42px;border-radius:50%;background:radial-gradient(circle at 30% 30%,var(--g5),var(--g3s));display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:900;color:var(--gold3);flex-shrink:0;border:1.5px solid var(--gold2);box-shadow:inset 0 0 8px #00000040}
+.s-name{font-family:'Amiri',serif;font-size:1.15rem;color:var(--text);font-weight:700}
+.s-meta{font-size:.66rem;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:6px}
+.s-meta-dot{width:3px;height:3px;border-radius:50%;background:var(--mutedDim)}
+.s-type-badge{font-size:.6rem;padding:2px 8px;border-radius:8px;font-weight:700}
+.s-type-badge.meccan{background:#caa02818;color:var(--gold2)}
+.s-type-badge.medinan{background:#3fa06618;color:var(--g6)}
 .fav-btn{background:none;border:none;font-size:1.05rem;cursor:pointer;padding:4px;transition:transform .2s}
 .fav-btn:active{transform:scale(1.3)}
 .r-hdr{background:linear-gradient(135deg,var(--g3s),var(--g4));border-radius:17px;padding:16px;text-align:center;margin-bottom:12px;border:1px solid var(--border)}
@@ -331,9 +337,15 @@ body.light{--bg:#f0f4f0;--card:#ffffff;--card2:#e8f0e8;--card3:#d0e4d0;--text:#0
     <div class="loader"><div class="ls"></div><div>جارٍ التحميل...</div></div>
   </div>
 
-  <div class="loc-card" onclick="openLocationPicker()" style="cursor:pointer">
+  <div class="loc-card" onclick="openLocationPicker()" style="cursor:pointer;margin-bottom:8px">
     <div style="font-size:1.3rem">📍</div>
     <div class="p-nm" style="font-size:.82rem;flex:1" id="locName">يرجى السماح بالموقع</div>
+    <div style="color:var(--gold2);font-size:.78rem">تغيير ›</div>
+  </div>
+
+  <div class="loc-card" onclick="openMethodPicker()" style="cursor:pointer">
+    <div style="font-size:1.3rem">🕐</div>
+    <div class="p-nm" style="font-size:.82rem;flex:1">طريقة الحساب: <span id="methodName" style="color:var(--gold2)">رابطة العالم الإسلامي</span></div>
     <div style="color:var(--gold2);font-size:.78rem">تغيير ›</div>
   </div>
 </div>
@@ -346,6 +358,16 @@ body.light{--bg:#f0f4f0;--card:#ffffff;--card2:#e8f0e8;--card3:#d0e4d0;--text:#0
     <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px">أو اختر محافظتك من العراق:</div>
     <div id="govList" style="display:flex;flex-direction:column;gap:6px"></div>
     <button class="back-btn" style="width:100%;justify-content:center;margin-top:10px" onclick="closeLocationPicker()">إغلاق</button>
+  </div>
+</div>
+
+<!-- CALC METHOD MODAL -->
+<div class="modal-overlay" id="methodModal" style="position:fixed;inset:0;background:#000c;z-index:300;display:none;align-items:center;justify-content:center;padding:14px">
+  <div style="background:var(--card);border-radius:20px;padding:20px;width:100%;max-width:420px;max-height:80vh;overflow-y:auto;border:1px solid var(--border)">
+    <div class="sec-title" style="margin-bottom:8px">🕐 طريقة حساب المواقيت</div>
+    <div style="font-size:.76rem;color:var(--muted);margin-bottom:14px;line-height:1.6">إذا كانت الأوقات تختلف بدقائق عن مسجد منطقتك، جرّب طريقة حساب مختلفة لتطابق التوقيت المعتمد محلياً</div>
+    <div id="methodList" style="display:flex;flex-direction:column;gap:6px"></div>
+    <button class="back-btn" style="width:100%;justify-content:center;margin-top:10px" onclick="closeMethodPicker()">إغلاق</button>
   </div>
 </div>
 
@@ -423,8 +445,18 @@ body.light{--bg:#f0f4f0;--card:#ffffff;--card2:#e8f0e8;--card3:#d0e4d0;--text:#0
     </div>
     <div class="q-deg" id="qDeg">جارٍ الحساب...</div>
     <div class="q-sub" id="qSub">يرجى السماح بالموقع</div>
+    <div id="qAccuracyBadge" style="display:none;margin-top:8px"></div>
+    <button class="tsb-ctrl" id="enableCompassBtn" style="display:none;margin-top:10px" onclick="requestCompassPermission()">🧭 تفعيل البوصلة</button>
     <div class="q-card">
       <div style="font-size:.8rem;color:var(--text);line-height:1.9">🕋 الكعبة المشرفة — مكة المكرمة<br>🧭 وجّه الهاتف حتى تشير الكعبة للأمام</div>
+    </div>
+    <div class="q-card" style="border-right:3px solid var(--gold)">
+      <div style="font-size:.78rem;color:var(--muted);line-height:1.8">
+        <b style="color:var(--gold2)">💡 لتحسين دقة البوصلة:</b><br>
+        • حرّك هاتفك برسم شكل ٨ في الهواء عدة مرات (معايرة)<br>
+        • أبعد الهاتف عن المعادن والأجهزة الكهربائية<br>
+        • استخدم المكان المفتوح بدل الداخل إن أمكن
+      </div>
     </div>
   </div>
 </div>
@@ -695,11 +727,44 @@ const pNames={Fajr:'الفجر',Sunrise:'الشروق',Dhuhr:'الظهر',Asr:'�
 const pIcons={Fajr:'🌤',Sunrise:'🌅',Dhuhr:'☀️',Asr:'🌤',Maghrib:'🌇',Isha:'🌙'};
 function toM(t){const[h,m]=t.split(':').map(Number);return h*60+m;}
 
+const calcMethods=[
+  {id:3,name:'رابطة العالم الإسلامي'},
+  {id:4,name:'جامعة أم القرى (مكة)'},
+  {id:5,name:'الهيئة المصرية العامة للمساحة'},
+  {id:8,name:'الخليج (الإمارات وغيرها)'},
+  {id:2,name:'الجمعية الإسلامية لأمريكا الشمالية'},
+  {id:1,name:'جامعة العلوم الإسلامية - كراتشي'},
+  {id:0,name:'الجادة (Jafari/Shia)'},
+  {id:7,name:'إيران'},
+];
+
+function getCalcMethod(){
+  return Number(localStorage.getItem('calcMethod')||4);
+}
+
+function openMethodPicker(){
+  const cur=getCalcMethod();
+  document.getElementById('methodList').innerHTML=calcMethods.map(m=>
+    `<button class="tsb-ctrl" style="text-align:right;padding:11px 14px;${m.id===cur?'border-color:var(--gold);color:var(--gold2)':''}" onclick="useCalcMethod(${m.id},'${m.name}')">${m.id===cur?'✓ ':''}${m.name}</button>`
+  ).join('');
+  document.getElementById('methodModal').style.display='flex';
+}
+function closeMethodPicker(){document.getElementById('methodModal').style.display='none';}
+
+function useCalcMethod(id,name){
+  localStorage.setItem('calcMethod',id);
+  document.getElementById('methodName').textContent=name;
+  closeMethodPicker();
+  showToast('✅ تم تغيير طريقة الحساب');
+  if(window._lat) loadPrayers(window._lat,window._lon);
+}
+
 async function loadPrayers(lat,lon){
   try{
     const now=new Date();
     const d=`${now.getDate()}-${now.getMonth()+1}-${now.getFullYear()}`;
-    const r=await fetch(`https://api.aladhan.com/v1/timings/${d}?latitude=${lat}&longitude=${lon}&method=4`);
+    const method=getCalcMethod();
+    const r=await fetch(`https://api.aladhan.com/v1/timings/${d}?latitude=${lat}&longitude=${lon}&method=${method}`);
     const data=await r.json();
     if(data.code===200){pTimes=data.data.timings;renderPrayers();startCd();}
   }catch(e){document.getElementById('pList').innerHTML='<div style="color:#ef9a9a;text-align:center;padding:20px">❌ تعذر التحميل</div>';}
@@ -769,7 +834,14 @@ function renderSList(list){
   document.getElementById('surahList').innerHTML=list.map(s=>`
     <div class="s-row" onclick="openSurah(${s.number},'${s.name}','${s.englishName}',${s.numberOfAyahs},'${s.revelationType}')">
       <div class="s-num">${s.number}</div>
-      <div style="flex:1"><div class="s-name">${s.name}</div><div class="s-meta">${s.numberOfAyahs} آية • ${s.revelationType==='Meccan'?'مكية':'مدنية'}</div></div>
+      <div style="flex:1">
+        <div class="s-name">${s.name}</div>
+        <div class="s-meta">
+          <span>${s.numberOfAyahs} آية</span>
+          <span class="s-meta-dot"></span>
+          <span class="s-type-badge ${s.revelationType==='Meccan'?'meccan':'medinan'}">${s.revelationType==='Meccan'?'مكية':'مدنية'}</span>
+        </div>
+      </div>
       <button class="fav-btn" onclick="event.stopPropagation();toggleFav(${s.number},'${s.name}')">${favs.includes(s.number)?'⭐':'☆'}</button>
     </div>`).join('');
 }
@@ -792,7 +864,14 @@ function renderFavs(){
   el.innerHTML=allSurahs.filter(s=>favs.includes(s.number)).map(s=>`
     <div class="s-row" onclick="openSurah(${s.number},'${s.name}','${s.englishName}',${s.numberOfAyahs},'${s.revelationType}')">
       <div class="s-num">${s.number}</div>
-      <div style="flex:1"><div class="s-name">${s.name}</div><div class="s-meta">${s.numberOfAyahs} آية</div></div>
+      <div style="flex:1">
+        <div class="s-name">${s.name}</div>
+        <div class="s-meta">
+          <span>${s.numberOfAyahs} آية</span>
+          <span class="s-meta-dot"></span>
+          <span class="s-type-badge ${s.revelationType==='Meccan'?'meccan':'medinan'}">${s.revelationType==='Meccan'?'مكية':'مدنية'}</span>
+        </div>
+      </div>
       <button class="fav-btn" onclick="event.stopPropagation();toggleFav(${s.number},'${s.name}')">⭐</button>
     </div>`).join('');
 }
@@ -940,21 +1019,89 @@ function copyText(text){navigator.clipboard?.writeText(text).then(()=>showToast(
 function backToQ(){document.getElementById('qHome').style.display='block';document.getElementById('qReader').style.display='none';stopAudio();}
 
 // QIBLA
-let qAngle=0,qW=false;
+let qAngle=0,qW=false,smoothHeading=null,usingAbsolute=false;
 function calcQibla(lat,lon){const kL=21.4225*Math.PI/180,kO=39.8262*Math.PI/180,uL=lat*Math.PI/180,dO=kO-lon*Math.PI/180,y=Math.sin(dO)*Math.cos(kL),x=Math.cos(uL)*Math.sin(kL)-Math.sin(uL)*Math.cos(kL)*Math.cos(dO);return((Math.atan2(y,x)*180/Math.PI)+360)%360;}
 
 function initQibla(){
   if(qW)return;
-  if(!navigator.geolocation){document.getElementById('qSub').textContent='المتصفح لا يدعم الموقع';return;}
-  navigator.geolocation.getCurrentPosition(pos=>{
-    qAngle=calcQibla(pos.coords.latitude,pos.coords.longitude);
+  const lat=window._lat,lon=window._lon;
+  if(lat){
+    qAngle=calcQibla(lat,lon);
     document.getElementById('qDeg').textContent=`اتجاه القبلة: ${Math.round(qAngle)}° من الشمال`;
     document.getElementById('qSub').textContent='وجّه الهاتف حتى تصبح الكعبة أمامك';
-    if(window.DeviceOrientationEvent){window.addEventListener('deviceorientationabsolute',hdOr,true);window.addEventListener('deviceorientation',hdOr,true);qW=true;}
-    else{document.getElementById('compassOut').style.transform=`rotate(${qAngle}deg)`;}
-  },()=>{document.getElementById('qSub').textContent='يرجى السماح بتحديد الموقع';});
+    startCompass();
+  }else if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(pos=>{
+      window._lat=pos.coords.latitude;window._lon=pos.coords.longitude;
+      qAngle=calcQibla(pos.coords.latitude,pos.coords.longitude);
+      document.getElementById('qDeg').textContent=`اتجاه القبلة: ${Math.round(qAngle)}° من الشمال`;
+      document.getElementById('qSub').textContent='وجّه الهاتف حتى تصبح الكعبة أمامك';
+      startCompass();
+    },()=>{document.getElementById('qSub').textContent='يرجى السماح بتحديد الموقع';});
+  }else{
+    document.getElementById('qSub').textContent='المتصفح لا يدعم تحديد الموقع';
+  }
 }
-function hdOr(e){const h=e.webkitCompassHeading||(e.alpha?360-e.alpha:0);document.getElementById('compassOut').style.transform=`rotate(${qAngle-h}deg)`;}
+
+function startCompass(){
+  // iOS 13+ requires explicit permission
+  if(typeof DeviceOrientationEvent!=='undefined' && typeof DeviceOrientationEvent.requestPermission==='function'){
+    document.getElementById('enableCompassBtn').style.display='block';
+    return;
+  }
+  attachCompassListeners();
+}
+
+function requestCompassPermission(){
+  DeviceOrientationEvent.requestPermission().then(state=>{
+    if(state==='granted'){
+      document.getElementById('enableCompassBtn').style.display='none';
+      attachCompassListeners();
+    }else{
+      showToast('❌ لم يتم السماح بالوصول للبوصلة');
+    }
+  }).catch(()=>showToast('❌ تعذر طلب إذن البوصلة'));
+}
+
+function attachCompassListeners(){
+  if(qW)return;
+  qW=true;
+  window.addEventListener('deviceorientationabsolute',hdOrAbs,true);
+  window.addEventListener('deviceorientation',hdOr,true);
+  setTimeout(()=>{
+    if(!usingAbsolute){
+      document.getElementById('qAccuracyBadge').style.display='block';
+      document.getElementById('qAccuracyBadge').innerHTML='<span class="pill">⚠️ دقة تقريبية - عاير البوصلة برسم ٨</span>';
+    }
+  },1500);
+}
+
+function smoothAngle(target){
+  if(smoothHeading===null){smoothHeading=target;return target;}
+  let diff=target-smoothHeading;
+  if(diff>180)diff-=360; if(diff<-180)diff+=360;
+  smoothHeading=(smoothHeading+diff*0.25+360)%360;
+  return smoothHeading;
+}
+
+function hdOrAbs(e){
+  usingAbsolute=true;
+  const h=e.webkitCompassHeading!==undefined?e.webkitCompassHeading:(e.alpha!==null?360-e.alpha:null);
+  if(h===null)return;
+  const sh=smoothAngle(h);
+  document.getElementById('compassOut').style.transform=`rotate(${qAngle-sh}deg)`;
+  const badge=document.getElementById('qAccuracyBadge');
+  badge.style.display='block';
+  badge.innerHTML='<span class="pill">✅ بوصلة دقيقة (اتجاه مطلق)</span>';
+}
+
+function hdOr(e){
+  if(usingAbsolute)return; // prefer absolute if available
+  const h=e.webkitCompassHeading!==undefined?e.webkitCompassHeading:(e.alpha!==null?360-e.alpha:null);
+  if(h===null)return;
+  const sh=smoothAngle(h);
+  document.getElementById('compassOut').style.transform=`rotate(${qAngle-sh}deg)`;
+}
 
 // AZKAR
 const azDB={
@@ -1307,6 +1454,8 @@ function useGPSLocation(){
 window.addEventListener('load',()=>{
   setTimeout(()=>document.getElementById('splash').classList.add('hide'),2200);
   updateDates();loadSurahs();showAyahDay();
+  const savedMethod=calcMethods.find(m=>m.id===getCalcMethod());
+  if(savedMethod) document.getElementById('methodName').textContent=savedMethod.name;
   if(navigator.geolocation){
     navigator.geolocation.getCurrentPosition(
       async pos=>{
@@ -1320,9 +1469,9 @@ window.addEventListener('load',()=>{
           document.getElementById('hdrLoc').textContent=`📍 ${city}`;
         }catch(e){}
       },
-      ()=>{loadPrayers(33.3152,44.3661);document.getElementById('locName').textContent='بغداد، العراق (افتراضي)';document.getElementById('hdrLoc').textContent='📍 بغداد';}
+      ()=>{window._lat=33.3152;window._lon=44.3661;loadPrayers(33.3152,44.3661);document.getElementById('locName').textContent='بغداد، العراق (افتراضي)';document.getElementById('hdrLoc').textContent='📍 بغداد';}
     );
-  }else{loadPrayers(33.3152,44.3661);}
+  }else{window._lat=33.3152;window._lon=44.3661;loadPrayers(33.3152,44.3661);}
 });
 </script>
 </body>
