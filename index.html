@@ -331,9 +331,21 @@ body.light{--bg:#f0f4f0;--card:#ffffff;--card2:#e8f0e8;--card3:#d0e4d0;--text:#0
     <div class="loader"><div class="ls"></div><div>جارٍ التحميل...</div></div>
   </div>
 
-  <div class="loc-card">
+  <div class="loc-card" onclick="openLocationPicker()" style="cursor:pointer">
     <div style="font-size:1.3rem">📍</div>
-    <div class="p-nm" style="font-size:.82rem" id="locName">يرجى السماح بالموقع</div>
+    <div class="p-nm" style="font-size:.82rem;flex:1" id="locName">يرجى السماح بالموقع</div>
+    <div style="color:var(--gold2);font-size:.78rem">تغيير ›</div>
+  </div>
+</div>
+
+<!-- LOCATION PICKER MODAL -->
+<div class="modal-overlay" id="locModal" style="position:fixed;inset:0;background:#000c;z-index:300;display:none;align-items:center;justify-content:center;padding:14px">
+  <div style="background:var(--card);border-radius:20px;padding:20px;width:100%;max-width:420px;max-height:80vh;overflow-y:auto;border:1px solid var(--border)">
+    <div class="sec-title" style="margin-bottom:14px">📍 حدد موقعك</div>
+    <button class="zk-btn" style="width:100%;margin-bottom:14px;padding:11px" onclick="useGPSLocation()">📡 استخدام GPS (تحديد دقيق)</button>
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px">أو اختر محافظتك من العراق:</div>
+    <div id="govList" style="display:flex;flex-direction:column;gap:6px"></div>
+    <button class="back-btn" style="width:100%;justify-content:center;margin-top:10px" onclick="closeLocationPicker()">إغلاق</button>
   </div>
 </div>
 
@@ -368,6 +380,20 @@ body.light{--bg:#f0f4f0;--card:#ffffff;--card2:#e8f0e8;--card3:#d0e4d0;--text:#0
 
   <div id="qReader" style="display:none">
     <button class="back-btn" onclick="backToQ()">← رجوع</button>
+    <div class="r-hdr">
+      <div class="r-name" id="rName"></div>
+      <div class="r-info" id="rInfo"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <select id="reciterSelect" style="flex:1;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:11px;padding:9px;font-family:'Cairo',sans-serif;font-size:.82rem">
+        <option value="ar.alafasy">مشاري العفاسي</option>
+        <option value="ar.husary">محمود الحصري</option>
+        <option value="ar.minshawi">محمد المنشاوي</option>
+        <option value="ar.abdulbasitmurattal">عبد الباسط عبد الصمد</option>
+        <option value="ar.shaatree">أبو بكر الشاطري</option>
+      </select>
+      <button class="zk-btn" onclick="playFullSurah()">🎵 تشغيل السورة</button>
+    </div>
     <div class="audio-player" id="audioPlayer">
       <div class="ap-name" id="apName">🎵 جارٍ التشغيل...</div>
       <div class="ap-controls">
@@ -376,10 +402,7 @@ body.light{--bg:#f0f4f0;--card:#ffffff;--card2:#e8f0e8;--card3:#d0e4d0;--text:#0
         <div class="ap-time" id="apTime">0:00</div>
         <button class="ap-btn" onclick="stopAudio()">⏹</button>
       </div>
-    </div>
-    <div class="r-hdr">
-      <div class="r-name" id="rName"></div>
-      <div class="r-info" id="rInfo"></div>
+      <div id="apError" style="display:none;color:#ef9a9a;font-size:.75rem;margin-top:6px"></div>
     </div>
     <div class="bsm" id="rBsm">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
     <div id="ayahsCont"></div>
@@ -806,6 +829,7 @@ async function openSurah(num,name,ename,ayahs,type){
   document.getElementById('rInfo').textContent=`${ename} • ${ayahs} آية • ${type==='Meccan'?'مكية':'مدنية'}`;
   document.getElementById('rBsm').style.display=num===9?'none':'block';
   document.getElementById('ayahsCont').innerHTML='<div class="loader"><div class="ls"></div><div>جارٍ التحميل...</div></div>';
+  stopAudio();
   saveBookmark(num,name,1);
   markSurahRead(num);
   try{
@@ -824,20 +848,42 @@ async function openSurah(num,name,ename,ayahs,type){
         </div>
         <div class="tafsir-box" id="tf-${a.number}"><div class="tafsir-text">جارٍ تحميل التفسير...</div></div>
       </div>`).join('');
-    // Play surah audio
-    playAudio(`https://cdn.islamic.network/quran/audio/128/ar.alafasy/${num}.mp3`,`سورة ${name}`);
   }catch(e){document.getElementById('ayahsCont').innerHTML='<div style="color:#ef9a9a;text-align:center;padding:20px">❌ تعذر التحميل</div>';}
+}
+
+function playFullSurah(){
+  const reciter=document.getElementById('reciterSelect').value;
+  const url=`https://cdn.islamic.network/quran/audio-surah/128/${reciter}/${curSurahNum}.mp3`;
+  playAudio(url,`سورة ${document.getElementById('rName').textContent}`);
 }
 
 // AUDIO
 let isPlaying=false;
 function playAudio(url,title){
   const el=document.getElementById('audioEl');
-  el.src=url; el.play();
-  isPlaying=true;
+  const errBox=document.getElementById('apError');
+  errBox.style.display='none';
   document.getElementById('audioPlayer').classList.add('show');
   document.getElementById('apName').textContent='🎵 '+title;
-  document.getElementById('apPlayBtn').textContent='⏸ إيقاف';
+  el.src=url;
+  const playPromise=el.play();
+  if(playPromise!==undefined){
+    playPromise.then(()=>{
+      isPlaying=true;
+      document.getElementById('apPlayBtn').textContent='⏸ إيقاف';
+    }).catch(err=>{
+      isPlaying=false;
+      document.getElementById('apPlayBtn').textContent='▶ تشغيل';
+      errBox.style.display='block';
+      errBox.textContent='⚠️ اضغط زر التشغيل ▶ يدوياً (المتصفح يمنع التشغيل الآلي)';
+    });
+  }
+  el.onerror=()=>{
+    errBox.style.display='block';
+    errBox.textContent='❌ تعذر تحميل الصوت، تحقق من الاتصال بالإنترنت أو جرّب قارئاً آخر';
+    isPlaying=false;
+    document.getElementById('apPlayBtn').textContent='▶ تشغيل';
+  };
   el.ontimeupdate=()=>{
     if(el.duration){
       document.getElementById('apFill').style.width=(el.currentTime/el.duration*100)+'%';
@@ -848,23 +894,31 @@ function playAudio(url,title){
 }
 
 function playAyah(num,label){
-  playAudio(`https://cdn.islamic.network/quran/audio/128/ar.alafasy/${num}.mp3`,label);
+  const reciter=document.getElementById('reciterSelect')?document.getElementById('reciterSelect').value:'ar.alafasy';
+  playAudio(`https://cdn.islamic.network/quran/audio/128/${reciter}/${num}.mp3`,label);
 }
 
 function toggleAudio(){
   const el=document.getElementById('audioEl');
-  if(isPlaying){el.pause();isPlaying=false;document.getElementById('apPlayBtn').textContent='▶ تشغيل';}
-  else{el.play();isPlaying=true;document.getElementById('apPlayBtn').textContent='⏸ إيقاف';}
+  if(!el.src){showToast('⚠️ اختر آية أو اضغط تشغيل السورة أولاً');return;}
+  if(isPlaying){
+    el.pause();isPlaying=false;document.getElementById('apPlayBtn').textContent='▶ تشغيل';
+  }else{
+    el.play().then(()=>{isPlaying=true;document.getElementById('apPlayBtn').textContent='⏸ إيقاف';})
+    .catch(()=>{showToast('❌ تعذر التشغيل');});
+  }
 }
 
 function stopAudio(){
   const el=document.getElementById('audioEl');
-  el.pause();el.src='';isPlaying=false;
+  el.pause();el.removeAttribute('src');el.load();isPlaying=false;
   document.getElementById('audioPlayer').classList.remove('show');
+  document.getElementById('apError').style.display='none';
 }
 
 function seekAudio(e){
   const el=document.getElementById('audioEl');
+  if(!el.duration)return;
   const rect=e.currentTarget.getBoundingClientRect();
   const pct=(e.clientX-rect.left)/rect.width;
   el.currentTime=el.duration*pct;
@@ -1184,7 +1238,72 @@ function initHaramain(){
   document.getElementById('medinaDir').textContent='بخط مستقيم من موقعك الحالي';
 }
 
-// INIT
+// LOCATION PICKER
+const iraqGovs=[
+  {name:'بغداد',lat:33.3152,lon:44.3661},
+  {name:'البصرة',lat:30.5085,lon:47.7804},
+  {name:'الموصل',lat:36.3489,lon:43.1577},
+  {name:'أربيل',lat:36.1901,lon:44.0091},
+  {name:'النجف',lat:31.9986,lon:44.3331},
+  {name:'كربلاء',lat:32.6160,lon:44.0249},
+  {name:'الحلة (بابل)',lat:32.4839,lon:44.4203},
+  {name:'الناصرية (ذي قار)',lat:31.0566,lon:46.2580},
+  {name:'كركوك',lat:35.4681,lon:44.3922},
+  {name:'الرمادي (الأنبار)',lat:33.4222,lon:43.3056},
+  {name:'العمارة (ميسان)',lat:31.8359,lon:47.1450},
+  {name:'الديوانية (القادسية)',lat:31.9890,lon:44.9220},
+  {name:'السماوة (المثنى)',lat:31.3289,lon:45.2746},
+  {name:'بعقوبة (ديالى)',lat:33.7488,lon:44.6480},
+  {name:'تكريت (صلاح الدين)',lat:34.6038,lon:43.6776},
+  {name:'دهوك',lat:36.8617,lon:42.9881},
+  {name:'السليمانية',lat:35.5650,lon:45.4347},
+  {name:'الكوت (واسط)',lat:32.5122,lon:45.8281},
+  {name:'الزعفرانية (بغداد)',lat:33.2417,lon:44.4500},
+];
+
+function openLocationPicker(){
+  document.getElementById('govList').innerHTML=iraqGovs.map(g=>
+    `<button class="tsb-ctrl" style="text-align:right;padding:11px 14px" onclick="useGovLocation('${g.name}',${g.lat},${g.lon})">📍 ${g.name}</button>`
+  ).join('');
+  document.getElementById('locModal').style.display='flex';
+}
+function closeLocationPicker(){document.getElementById('locModal').style.display='none';}
+
+function useGovLocation(name,lat,lon){
+  window._lat=lat;window._lon=lon;
+  document.getElementById('locName').textContent=name+'، العراق';
+  document.getElementById('hdrLoc').textContent='📍 '+name;
+  loadPrayers(lat,lon);
+  closeLocationPicker();
+  showToast('✅ تم تحديد '+name);
+}
+
+function useGPSLocation(){
+  if(!navigator.geolocation){showToast('❌ المتصفح لا يدعم GPS');return;}
+  showToast('📡 جارٍ تحديد الموقع...');
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    window._lat=pos.coords.latitude;window._lon=pos.coords.longitude;
+    loadPrayers(pos.coords.latitude,pos.coords.longitude);
+    try{
+      const g=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=ar`);
+      const gd=await g.json();
+      const city=gd.address.city||gd.address.town||gd.address.village||gd.address.state||'';
+      document.getElementById('locName').textContent=`${city}، ${gd.address.country||''}`;
+      document.getElementById('hdrLoc').textContent=`📍 ${city}`;
+      showToast('✅ تم تحديد موقعك بدقة');
+    }catch(e){
+      document.getElementById('locName').textContent='تم التحديد بنجاح';
+      showToast('✅ تم تحديد موقعك');
+    }
+    closeLocationPicker();
+  },(err)=>{
+    let msg='❌ تعذر تحديد الموقع';
+    if(err.code===1)msg='❌ يرجى السماح بالوصول للموقع من إعدادات المتصفح';
+    showToast(msg,3500);
+  },{enableHighAccuracy:true,timeout:10000});
+}
+
+
 window.addEventListener('load',()=>{
   setTimeout(()=>document.getElementById('splash').classList.add('hide'),2200);
   updateDates();loadSurahs();showAyahDay();
