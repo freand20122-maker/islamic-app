@@ -345,7 +345,7 @@ body.light{--bg:#f0f4f0;--card:#ffffff;--card2:#e8f0e8;--card3:#d0e4d0;--text:#0
 
   <div class="loc-card" onclick="openMethodPicker()" style="cursor:pointer">
     <div style="font-size:1.3rem">🕐</div>
-    <div class="p-nm" style="font-size:.82rem;flex:1">طريقة الحساب: <span id="methodName" style="color:var(--gold2)">رابطة العالم الإسلامي</span></div>
+    <div class="p-nm" style="font-size:.82rem;flex:1">طريقة الحساب: <span id="methodName" style="color:var(--gold2)">جامعة أم القرى (مكة)</span></div>
     <div style="color:var(--gold2);font-size:.78rem">تغيير ›</div>
   </div>
 </div>
@@ -770,6 +770,13 @@ async function loadPrayers(lat,lon){
   }catch(e){document.getElementById('pList').innerHTML='<div style="color:#ef9a9a;text-align:center;padding:20px">❌ تعذر التحميل</div>';}
 }
 
+function to12h(timeStr){
+  const[h,m]=timeStr.split(':').map(Number);
+  const period=h>=12?'م':'ص';
+  let h12=h%12; if(h12===0)h12=12;
+  return `${h12}:${String(m).padStart(2,'0')} ${period}`;
+}
+
 function renderPrayers(){
   const keys=['Fajr','Sunrise','Dhuhr','Asr','Maghrib','Isha'];
   const now=new Date(),nowM=now.getHours()*60+now.getMinutes();
@@ -777,11 +784,11 @@ function renderPrayers(){
   keys.forEach(k=>{const m=toM(pTimes[k]);if(m>nowM&&m<nextM){nextM=m;next=k;}});
   if(!next)next='Fajr';
   document.getElementById('nextName').textContent=pNames[next];
-  document.getElementById('nextTime').textContent=pTimes[next];
+  document.getElementById('nextTime').textContent=to12h(pTimes[next]);
   document.getElementById('pList').innerHTML=keys.map(k=>`
     <div class="p-row ${k===next?'cur':''}">
       <div class="p-row-l"><div class="p-ic">${pIcons[k]}</div><div><div class="p-nm">${pNames[k]}</div><div class="p-en">${k}</div></div></div>
-      <div class="p-badge">${pTimes[k]}</div>
+      <div class="p-badge">${to12h(pTimes[k])}</div>
     </div>`).join('');
 }
 
@@ -1238,7 +1245,8 @@ async function initRamadan(){
   const lat=window._lat||33.3152,lon=window._lon||44.3661;
   try{
     const d=`${now.getDate()}-${now.getMonth()+1}-${now.getFullYear()}`;
-    const r=await fetch(`https://api.aladhan.com/v1/timings/${d}?latitude=${lat}&longitude=${lon}&method=4`);
+    const method=getCalcMethod();
+    const r=await fetch(`https://api.aladhan.com/v1/timings/${d}?latitude=${lat}&longitude=${lon}&method=${method}`);
     const data=await r.json();
     if(data.code===200){
       const t=data.data.timings;
@@ -1248,7 +1256,7 @@ async function initRamadan(){
           <div style="background:var(--card);border-radius:12px;padding:12px;border:1px solid var(--border);text-align:center">
             <div style="font-size:1.4rem;margin-bottom:4px">${ic}</div>
             <div style="font-size:.75rem;color:var(--muted)">${n}</div>
-            <div style="font-size:1.1rem;font-weight:900;color:white;margin-top:3px">${v}</div>
+            <div style="font-size:1.1rem;font-weight:900;color:white;margin-top:3px">${to12h(v)}</div>
           </div>`).join('')}
         </div>`;
     }
